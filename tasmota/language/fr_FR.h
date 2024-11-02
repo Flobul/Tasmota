@@ -903,6 +903,8 @@
 #define D_SENSOR_WINDMETER_SPEED "Anémomètre"
 #define D_SENSOR_TELEINFO_RX   "TInfo Rx"
 #define D_SENSOR_TELEINFO_ENABLE "TInfo En"
+#define D_SENSOR_PALAZZETTI_RX   "Pala Rx"
+#define D_SENSOR_PALAZZETTI_TX   "Pala Tx"
 #define D_SENSOR_LMT01_PULSE   "LMT01 Impulsion"
 #define D_SENSOR_ADC_INPUT     "ADC Entrée"
 #define D_SENSOR_ADC_TEMP      "ADC Temp."

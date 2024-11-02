@@ -569,6 +569,9 @@ constexpr uint32_t feature[] = {
 #if defined(USE_ENERGY_SENSOR) && defined(USE_TELEINFO)
   0x00040000 |  // xnrg_15_teleinfo.ino
 #endif
+#if defined(USE_PALAZZETTI)
+  0x00040000 |  // xdrv_91_palazzetti.ino
+#endif
 #ifdef USE_LMT01
   0x00080000 |  // xsns_74_lmt01.ino
 #endif

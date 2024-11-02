@@ -120,6 +120,7 @@ enum UserSelectablePins {
 #endif
   GPIO_TELEINFO_RX,                    // Teleinfo telemetry data receive pin
   GPIO_TELEINFO_ENABLE,                // Teleinfo Enable Receive Pin
+  GPIO_PALAZZETTI_RX, GPIO_PALAZZETTI_TX,  // Palazzetti serial interface
   GPIO_LMT01,                          // LMT01 input counting pin
   GPIO_IEM3000_TX, GPIO_IEM3000_RX,    // IEM3000 Serial interface
   GPIO_ZIGBEE_RST,                     // Zigbee reset
@@ -386,6 +387,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ETH_PHY_POWER "|" D_SENSOR_ETH_PHY_MDC "|" D_SENSOR_ETH_PHY_MDIO "|"
 #endif
   D_SENSOR_TELEINFO_RX "|" D_SENSOR_TELEINFO_ENABLE "|"
+  D_SENSOR_PALAZZETTI_RX "|" D_SENSOR_PALAZZETTI_TX "|"
   D_SENSOR_LMT01_PULSE "|"
   D_SENSOR_IEM3000_TX "|" D_SENSOR_IEM3000_RX "|"
   D_SENSOR_ZIGBEE_RST "|"
@@ -1156,6 +1158,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_TELEINFO
   AGPIO(GPIO_TELEINFO_RX),
   AGPIO(GPIO_TELEINFO_ENABLE),
+#endif
+#ifdef USE_PALAZZETTI
+  AGPIO(GPIO_PALAZZETTI_RX),
+  AGPIO(GPIO_PALAZZETTI_TX),
 #endif
 #ifdef USE_MIEL_HVAC
   AGPIO(GPIO_MIEL_HVAC_TX),             // Mitsubishi Electric HVAC TX pin

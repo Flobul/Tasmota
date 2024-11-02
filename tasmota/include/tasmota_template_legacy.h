@@ -237,6 +237,8 @@ enum LegacyUserSelectablePins {
   GPI8_TCP_RX,         // TCP Serial bridge
   GPI8_TELEINFO_RX,    // TELEINFO serial interface
   GPI8_TELEINFO_ENABLE,// TELEINFO Enable PIN
+  GPI8_PALAZZETTI_RX,  // PALAZZETTI serial interface
+  GPI8_PALAZZETTI_TX,  // PALAZZETTI serial interface
   GPI8_LMT01,          // LMT01 input counting pin
   GPI8_IEM3000_TX,     // IEM3000 Serial interface
   GPI8_IEM3000_RX,     // IEM3000 Serial interface
@@ -467,6 +469,8 @@ const uint16_t kGpioConvert[] PROGMEM = {
   AGPIO(GPIO_TCP_RX),         // TCP Serial bridge
   AGPIO(GPIO_TELEINFO_RX),
   AGPIO(GPIO_TELEINFO_ENABLE),
+  AGPIO(GPIO_PALAZZETTI_RX),
+  AGPIO(GPIO_PALAZZETTI_TX),
   AGPIO(GPIO_LMT01),          // LMT01, count pulses on GPIO
   AGPIO(GPIO_IEM3000_TX),     // IEM3000 Serial interface
   AGPIO(GPIO_IEM3000_RX),     // IEM3000 Serial interface
