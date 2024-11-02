@@ -730,7 +730,6 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI Clk"
-#define D_SENSOR_SDIO_CMD      "SDIO Cmd"
 #define D_GPIO_TS_SPI_CS       "TS SPI CS"
 #define D_GPIO_TS_RST          "TS RST"
 #define D_GPIO_TS_IRQ          "TS IRQ"

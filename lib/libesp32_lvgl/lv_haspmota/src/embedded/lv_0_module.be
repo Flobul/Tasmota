@@ -13,10 +13,8 @@ var classes = [
     "bar", "slider", "arc", "textarea", "led", "dropdown",
     "scale",
     "qrcode", "chart", "spangroup", "span",
-    # ported from LVGL 8
-    "colorwheel",
     # new internal names
-    "button", "image", "buttonmatrix", "msgbox"
+    "button", "image", "buttonmatrix",
   ]
 
 for cl: classes

@@ -98,11 +98,7 @@ struct ModbusBridgeTCP
   uint8_t client_next = 0;
   uint8_t *tcp_buf = nullptr; // data transfer buffer
   IPAddress ip_filter;
-# define MODBUS_TCP_INVALID_TRANSACTION_ID UINT32_MAX
-  // Invalid ID value denotes, that the data 'tcp_buf' points to
-  // should not be used to send Modbus TCP response (very likely
-  // the response was already sent).
-  uint32_t tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
+  uint16_t tcp_transaction_id = 0;
   bool output_mqtt = false;
 };
 
@@ -340,7 +336,7 @@ void ModbusBridgeHandle(void)
     for (uint32_t i = 0; i < nitems(modbusBridgeTCP.client_tcp); i++)
     {
       WiFiClient &client = modbusBridgeTCP.client_tcp[i];
-      if (client && modbusBridgeTCP.tcp_transaction_id != MODBUS_TCP_INVALID_TRANSACTION_ID)
+      if (client)
       {
         uint8_t header[9];
         uint8_t nrOfBytes = 8;
@@ -380,7 +376,6 @@ void ModbusBridgeHandle(void)
         }
         client.flush();
         AddLog(LOG_LEVEL_DEBUG, PSTR("MBS: MBRTCP from Modbus TransactionId:%d, deviceAddress:%d, writing:%d bytes to client (error:%d)"), (static_cast<uint16_t>(header[0]) << 8) + header[1], modbusBridge.buffer[0], nrOfBytes, error);
-        modbusBridgeTCP.tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
       }
     }
 #endif
@@ -732,8 +727,6 @@ void ModbusTCPHandle(void)
       client.stop();
       client = new_client;
     }
-
-    modbusBridgeTCP.tcp_transaction_id = MODBUS_TCP_INVALID_TRANSACTION_ID;
   }
 
   do
