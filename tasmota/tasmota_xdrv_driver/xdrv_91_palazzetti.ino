@@ -1735,34 +1735,37 @@ bool plzSendmsgCmd(const char* cmd) {
     return plzParser(cmdCopy);
 }
 
-bool plzParser(const char* type, const char* cmnd) {
-    char response[JSON_RESPONSE_SIZE];
+bool plzParser(const char* cmnd) {
+    //char response[JSON_RESPONSE_SIZE];
     plzIJson.cmdRes = Palazzetti::CommandResult::COMMUNICATION_ERROR;
     bool success = false;
-    char localCommand[16];
+    char localCommand[25];
     strncpy(localCommand, cmnd, sizeof(localCommand) - 1);
-    //localCommand[sizeof(localCommand) - 1] = '\0';
 
-    if (isGetRequest || isUdpRequest) JSONAddObj("DATA");
-
-    if (strcasecmp(type, "GET") == 0) {
-        success = plzParserGET(localCommand);
-    } else if (strcasecmp(type, "SET") == 0) {
-        success = plzParserSET(localCommand);
-    } else if (strcasecmp(type, "CMD") == 0) {
-        success = plzParserCMD(localCommand);
-    } else if (strcasecmp(type, "BKP") == 0) {
-        success = plzParserBKP(localCommand);
-    } else if (strcasecmp(type, "EXT") == 0) {
-        success = plzParserEXT(localCommand);
+    if (isGetRequest || isUdpRequest) {
+        JSONAddObj("DATA");
+    }
+    if (strncasecmp(localCommand, "GET ", 4) == 0) {
+        success = plzParserGET(localCommand + 4);
+    } else if (strncasecmp(localCommand, "SET ", 4) == 0) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzParser localCommand=%s"), localCommand);
+        success = plzParserSET(localCommand + 4);
+    } else if (strncasecmp(localCommand, "CMD ", 4) == 0) {
+        success = plzParserCMD(localCommand + 4);
+    } else if (strncasecmp(localCommand, "BKP ", 4) == 0) {
+        success = plzParserBKP(localCommand + 4);
+    } else if (strncasecmp(localCommand, "EXT ", 4) == 0) {
+        success = plzParserEXT(localCommand + 4);
     } else {
         plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
-        snprintf_P(plzIJson.msg, sizeof(plzIJson.msg), PSTR("Unknown command received: %s"), type);
-        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd commande non reconnue=%s"), type);
+        snprintf_P(plzIJson.msg, sizeof(plzIJson.msg), PSTR("Unknown command received: %s"), cmnd);
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd commande non reconnue=%s"), cmnd);
         //return false;
     }
 
-    if (success) plz_connected = true;
+    if (success) {
+        plz_connected = true;
+    }
 
     if (isGetRequest || isUdpRequest) {
         if (!success) {
@@ -1779,13 +1782,12 @@ bool plzParser(const char* type, const char* cmnd) {
         plzIJson.ts = getTimeStamp();
         JSONMerge();
 
-        if (strcasecmp(type, "BKP") == 0) {
+        if (strncasecmp(localCommand, "BKP ", 4) == 0) {
             char attachment[100];
-            snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s.%s"), localCommand, localCommand + 5);
+            snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s.%s"), localCommand + 4, localCommand + 9);
             Webserver->sendHeader(F("Content-Disposition"), attachment);
             
-            const char* parmStart = nullptr;
-            parmStart = strstr(plzIJson.data, "\"DATA\":{"); // Pour CSV
+            const char* parmStart = strstr(plzIJson.data, "\"DATA\":{"); // Pour CSV
             if (parmStart != nullptr) {
                 parmStart += 8;  // Ajuste le point de départ pour inclure seulement "PARM" et son contenu
                 const char* parmEnd = strstr(parmStart, ",\"SUCCESS\"");
@@ -1794,9 +1796,9 @@ bool plzParser(const char* type, const char* cmnd) {
                     int startIndex = parmStart - plzIJson.data;
                     int endIndex = parmEnd - plzIJson.data;
 
-                    if (strcmp(localCommand + 5, "CSV") == 0) {
+                    if (strncmp(localCommand + 9, "CSV", 3) == 0) {
                         WSSend(200, CT_PLAIN, String(plzIJson.data).substring(startIndex, endIndex - 1));
-                    } else if (strcmp(localCommand + 5, "JSON") == 0) {
+                    } else if (strncmp(localCommand + 9, "JSON", 4) == 0) {
                         WSSend(200, CT_APP_JSON, String(plzIJson.data).substring(startIndex - 1, endIndex));
                     }
                 } else {
@@ -1894,17 +1896,9 @@ bool plzParserGET(char* cmnd) {
     } else if (strcmp(cmnd, "POWR") == 0) {
         getPower();
     } else if (strncmp(cmnd, "PARM", 4) == 0) {
-        const char* commandArg = cmnd + 5;
-        if (*commandArg != '\0') {
-            byte paramIndex = atoi(commandArg);
-            getParameter(paramIndex, "PAR");
-        }
+        getParameter(cmnd, "PAR");
     } else if (strncmp(cmnd, "HPAR", 4) == 0) {
-        const char* commandArg = cmnd + 5;
-        if (*commandArg != '\0') {
-            byte paramIndex = atoi(commandArg);
-            getHiddenParameter(paramIndex, "HPAR");
-        }
+        getHiddenParameter(cmnd, "HPAR");
     }
     return (plzIJson.cmdRes == Palazzetti::CommandResult::OK);
 }
@@ -1990,12 +1984,10 @@ bool plzParserSET(char* cmnd) {
         setChronoStatus(String(commandArg));
         strcpy(cmnd, "CHRSTATUS");
     //} else if (strncmp(cmnd, "CDYD", 4) == 0) {
-    } else if (strcmp(cmnd, "PARM") == 0) {
-        const char* commandArg = cmnd + 5;
-        setParameter(String(commandArg), "PAR");
-    } else if (strcmp(cmnd, "HPAR") == 0) {
-        const char* commandArg = cmnd + 5;
-        setHiddenParameter(String(commandArg), "HPAR");
+    } else if (strncmp(cmnd, "PARM", 4) == 0) {
+        setParameter(cmnd, "PAR");
+    } else if (strncmp(cmnd, "HPAR", 4) == 0) {
+        setHiddenParameter(cmnd, "HPAR");
     }
     //} else if (strcmp(cmnd, "LMAX") == 0) {
     //} else if (strcmp(cmnd, "LMIN") == 0) {
@@ -2015,23 +2007,20 @@ bool plzParserCMD(char* cmnd) {
 
 bool plzParserBKP(char* cmnd) {
     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande reçue cmnd BKP=%s"), cmnd);
-    char* commandArg = cmnd + 5;
-    if (strncmp(cmnd, "PARM", 4) == 0 && *commandArg != '\0') {
-        getAllParameters(commandArg);
-    } else if (strncmp(cmnd, "HPAR", 4) == 0 && *commandArg != '\0') {
-        getAllHiddenParameters(commandArg);
+    if (strncmp(cmnd, "PARM", 4) == 0) {
+        getAllParameters(cmnd);
+    } else if (strncmp(cmnd, "HPAR", 4) == 0) {
+        getAllHiddenParameters(cmnd);
     }
     return (plzIJson.cmdRes == Palazzetti::CommandResult::OK);
 }
 
 bool plzParserEXT(char* cmnd) {
     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande reçue cmnd EXT=%s"), cmnd);
-    char* commandArg = cmnd + 5;
-    byte paramIndex = atoi(commandArg);
-    if (strncmp(cmnd, "PARL", 4) == 0 && *commandArg != '\0') {
-        getParameter(paramIndex, "P");
-    } else if (strncmp(cmnd, "HPRL", 4) == 0 && *commandArg != '\0') {
-        getHiddenParameter(paramIndex, "HP");
+    if (strncmp(cmnd, "PARL", 4) == 0) {
+        getParameter(cmnd, "P");
+    } else if (strncmp(cmnd, "HPRL", 4) == 0) {
+        getHiddenParameter(cmnd, "HP");
     }
     return (plzIJson.cmdRes == Palazzetti::CommandResult::OK);
 }
