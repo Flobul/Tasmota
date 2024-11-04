@@ -1095,12 +1095,19 @@ void getDateTime() {
 }
 
 void setDateTime(const String &cmd) {
-    int year = cmd.substring(9).toInt();
-    int month = cmd.substring(14, 16).toInt();
-    int day = cmd.substring(17, 19).toInt();
-    int hour = cmd.substring(20, 22).toInt();
-    int minute = cmd.substring(23, 25).toInt();
-    int second = cmd.substring(26).toInt();
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(0, 4).c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(5, 7).c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(8, 10).c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(11, 13).c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(14, 16).c_str());
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setDateTime time=%s"), cmd.substring(17, 19).c_str());
+
+    int year = cmd.substring(0, 4).toInt();
+    int month = cmd.substring(5, 7).toInt();
+    int day = cmd.substring(8, 10).toInt();
+    int hour = cmd.substring(11, 13).toInt();
+    int minute = cmd.substring(14, 16).toInt();
+    int second = cmd.substring(17, 19).toInt();
 
     if (year < 2000 || year > 2099) {
         snprintf(plzIJson.msg, sizeof(plzIJson.msg), PSTR("Incorrect Year"));
