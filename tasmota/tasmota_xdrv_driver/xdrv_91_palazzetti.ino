@@ -58,10 +58,10 @@ const char HTTP_PALAZZETTI_TIME[]        PROGMEM = "{s}%s{m}%d " D_UNIT_HOUR " %
 const char HTTP_PALAZZETTI_TEMPERATURE[] PROGMEM = "{s}%s{m}%s " D_UNIT_DEGREE "%c{e}";
 const char HTTP_PALAZZETTI_THERMOSTAT[]  PROGMEM = "{s}%s{m}%s " D_UNIT_DEGREE "%c ";
 const char HTTP_PALAZZETTI_TITLE_D[]     PROGMEM = "{s}%s{m}%d ";
-const char HTTP_PALAZZETTI_POWER_BTN[]   PROGMEM = "<button style=\"background:#%s\" onclick=\"fetch('" PLZ_ENDPOINT "?cmd=%s')\">%s</button>";
-const char HTTP_PALAZZETTI_SLIDER_BTN[]  PROGMEM = "<td><button onclick=\"fetch('" PLZ_ENDPOINT "?cmd=%s');\">-</button></td>"
-                                                       "<td><input type='range' min='%d' max='%d' step='1' value='%s' onchange=\"fetch('" PLZ_ENDPOINT "?cmd=%s+this.value');\" /></td>"
-                                                       "<td><button onclick=\"fetch('" PLZ_ENDPOINT "?cmd=%s');\">+</button>{e}";
+const char HTTP_PALAZZETTI_POWER_BTN[]   PROGMEM = "<button style=\"background:#%s\" onclick=\"fetch('" PLZ_SENDMSG_ENDPOINT "?cmd=%s')\">%s</button>";
+const char HTTP_PALAZZETTI_SLIDER_BTN[]  PROGMEM = "<td><button onclick=\"fetch('" PLZ_SENDMSG_ENDPOINT "?cmd=%s');\">-</button></td>"
+                                                       "<td><input type='range' min='%d' max='%d' step='1' value='%s' onchange=\"fetch('" PLZ_SENDMSG_ENDPOINT "?cmd=%s+this.value');\" /></td>"
+                                                       "<td><button onclick=\"fetch('" PLZ_SENDMSG_ENDPOINT "?cmd=%s');\">+</button>{e}";
 const char kPalazzetti_Commands[] PROGMEM = "Sendmsg|Init|Interval|Timesync|Mqtt";
 
 enum Palazzetti_Commands {
@@ -206,6 +206,15 @@ struct Plz {
 #define D_PLZ_MAIN_FAN "Ventilateur central"
 #define D_PLZ_FAN4 "Ventilateur droit"
 #define D_PLZ_FAN3 "Ventilateur gauche"
+#define D_PLZ_F1RPM "Extracteur fumées"
+#define D_PLZ_F1V "Vitesse Ventilation F1V"
+#define D_PLZ_F2V "Vitesse Ventilation F2V"
+#define D_PLZ_POWERTIME "Durée alimentation électrique"
+#define D_PLZ_HEATTIME "Durée de chauffage"
+#define D_PLZ_SERVICETIME "Durée depuis dernier entretien"
+#define D_PLZ_PQT "Pellets brûlés"
+#define D_PLZ_SLNT_ON "Silencieux"
+#define D_PLZ_SLNT_OFF "Normal"
 
 #define D_PLZ_STATUS_0 "Eteint"
 #define D_PLZ_STATUS_1 "Arrêté par minuterie"
@@ -743,10 +752,7 @@ void plzShow(bool json)
         // {m}            = </th><td style='width:20px;white-space:nowrap'>
         // {e}            = </td></tr>
         // HTTP_TABLE100  = <table style='width:100%%'>
-                if (Plz.F2L == 0) {
-                    //silent
-                }
-        
+
         bool hasSetPoint    = (Plz.SETP != 0);
         bool hasPower       = (Plz.STOVETYPE != 8);
         bool hasSwitch      = (Plz.STOVETYPE != 7 && Plz.STOVETYPE != 8);
@@ -783,6 +789,12 @@ void plzShow(bool json)
             WSContentSend_PD(HTTP_PALAZZETTI_TITLE_S, "Statut", getPlzStatusMessage(Plz.STATUS));
         }
 
+        if (Plz.F2L == 0) {
+            WSContentSend_P(HTTP_PALAZZETTI_POWER_BTN, "ff3333", "SET+SLNT+0", D_PLZ_SLNT_OFF);
+        } else {
+            WSContentSend_P(HTTP_PALAZZETTI_POWER_BTN, "1bcc4d", "SET+SLNT+1", D_PLZ_SLNT_ON);
+        }
+
         if (hasSetPoint) {
             WSContentSend_P(HTTP_PALAZZETTI_THERMOSTAT, D_PLZ_SET_POINT, String(Plz.SETP, 2).c_str(), D_UNIT_CELSIUS[0]);
             WSContentSend_P(HTTP_PALAZZETTI_SLIDER_BTN, "SET+STPD", Plz.SPLMIN, Plz.SPLMAX, String(Plz.SETP, 2).c_str(), "SET+SETP", "SET+STPU");
@@ -791,19 +803,21 @@ void plzShow(bool json)
             WSContentSend_P(HTTP_PALAZZETTI_SLIDER_BTN, "SET+PWRD", 1, 5, String(Plz.PWR).c_str(), "SET+POWR", "SET+PWRU");
         }
 
+        WSContentSend_P("</table>{t}");
+
         if (hasFirstFan) {
             WSContentSend_PD(HTTP_PALAZZETTI_TITLE_S, D_PLZ_MAIN_FAN, getPlzFanStatus(Plz.F2L));
             int maxValue = (hasFanProp ? 8 : (hasFanAuto ? 7 : Plz.FANLMINMAX[1]));
             WSContentSend_P(HTTP_PALAZZETTI_SLIDER_BTN, "SET+FN2D", Plz.FANLMINMAX[0], maxValue, String(Plz.F2L).c_str(), "SET+RFAN", "SET+FN2U");
         }
 
-        if (!hasSecondFan) {
+        if (hasSecondFan) {
             WSContentSend_PD(HTTP_PALAZZETTI_TITLE_D, D_PLZ_FAN4, Plz.F4L);
             char cmndOff4[10];
             char cmndOn4[10];
             snprintf_P(cmndOff4, sizeof(cmndOff4), PSTR("SET+FN4L+%d"), Plz.FANLMINMAX[4]);
             snprintf_P(cmndOn4, sizeof(cmndOn4), PSTR("SET+FN4L+%d"), Plz.FANLMINMAX[5]);
-            if (!isFan4ASwitch) {
+            if (isFan4ASwitch) {
                 if (Plz.F4L == 0) {
                     WSContentSend_P(HTTP_PALAZZETTI_POWER_BTN, "1bcc4d", cmndOff4, D_ON);
                 } else {
@@ -814,13 +828,13 @@ void plzShow(bool json)
             }
         }
 
-        if (!hasThirdFan) {
+        if (hasThirdFan) {
             WSContentSend_PD(HTTP_PALAZZETTI_TITLE_D, D_PLZ_FAN3, Plz.F3L);
             char cmndOff3[10];
             char cmndOn3[10];
             snprintf_P(cmndOff3, sizeof(cmndOff3), PSTR("SET+FN3L+%d"), Plz.FANLMINMAX[2]);
             snprintf_P(cmndOn3, sizeof(cmndOn3), PSTR("SET+FN3L+%d"), Plz.FANLMINMAX[3]);
-            if (!isFan3ASwitch) {
+            if (isFan3ASwitch) {
                 if (Plz.F3L == 0) {
                     WSContentSend_P(HTTP_PALAZZETTI_POWER_BTN, "1bcc4d", cmndOff3, D_ON);
                 } else {
@@ -830,21 +844,20 @@ void plzShow(bool json)
                 WSContentSend_P(HTTP_PALAZZETTI_SLIDER_BTN, cmndOff3, Plz.FANLMINMAX[2], Plz.FANLMINMAX[3], Plz.F3L, "SET+FN3L", cmndOn3);
             }
         }
+        WSContentSend_P("</table>{t}");
 
         WSContentSend_PD(HTTP_PALAZZETTI_TEMPERATURE, D_PLZ_T1, String(Plz.T1).c_str(), D_UNIT_CELSIUS[0]);
         WSContentSend_PD(HTTP_PALAZZETTI_TEMPERATURE, D_PLZ_T2, String(Plz.T2).c_str(), D_UNIT_CELSIUS[0]);
         WSContentSend_PD(HTTP_PALAZZETTI_TEMPERATURE, D_PLZ_T3, String(Plz.T3).c_str(), D_UNIT_CELSIUS[0]);
-/*
-        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, "Extracteur fumées", Plz.F1RPM, "trs/min");
-        WSContentSend_PD(HTTP_PALAZZETTI_POURCENT, "Vitesse Ventilation F1V", Plz.F1V);
-        WSContentSend_PD(HTTP_PALAZZETTI_POURCENT, "Vitesse Ventilation F2V", Plz.F2V);
 
-        WSContentSend_PD(HTTP_PALAZZETTI_TIME, "Durée alimentation électrique", Plz.POWERTIMEh, Plz.POWERTIMEm);
+        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, D_PLZ_F1RPM, Plz.F1RPM, "trs/min");
+        WSContentSend_PD(HTTP_PALAZZETTI_POURCENT, D_PLZ_F1V, Plz.F1V);
+        WSContentSend_PD(HTTP_PALAZZETTI_POURCENT, D_PLZ_F2V, Plz.F2V);
 
-        WSContentSend_PD(HTTP_PALAZZETTI_TIME, "Durée de chauffage", Plz.HEATTIMEh, Plz.HEATTIMEm);
-        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, "Durée depuis dernier entretien", Plz.SERVICETIMEh, D_UNIT_HOUR);
-
-        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, "Pellets brûlés", Plz.PQT, D_UNIT_KILOGRAM);
+        WSContentSend_PD(HTTP_PALAZZETTI_TIME, D_PLZ_POWERTIME, Plz.POWERTIMEh, Plz.POWERTIMEm);
+        WSContentSend_PD(HTTP_PALAZZETTI_TIME, D_PLZ_HEATTIME, Plz.HEATTIMEh, Plz.HEATTIMEm);
+        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, D_PLZ_SERVICETIME, Plz.SERVICETIMEh, D_UNIT_HOUR);
+        WSContentSend_PD(HTTP_PALAZZETTI_SIMPLE, D_PLZ_PQT, Plz.PQT, D_UNIT_KILOGRAM);
 
         if (Plz.OVERTMPERRORS > 0) {
             WSContentSend_P(PSTR("<div style='color:red;'>Erreur de surchauffe détectée</div>"));
