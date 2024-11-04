@@ -1228,6 +1228,14 @@ Palazzetti::CommandResult Palazzetti::iInit()
     return CommandResult::OK;
 }
 
+Palazzetti::CommandResult Palazzetti::iReadDataAtech(uint16_t addrToRead, uint16_t *data, bool wordMode)
+{
+    if (!wordMode)
+        return fumisComReadByte(addrToRead, data);
+    else
+        return fumisComReadWord(addrToRead, data);
+}
+
 Palazzetti::CommandResult Palazzetti::iReadFansAtech()
 {
     byte buf[8];
@@ -1874,10 +1882,18 @@ Palazzetti::CommandResult Palazzetti::iUpdateStaticDataAtech()
     return CommandResult::OK;
 }
 
+Palazzetti::CommandResult Palazzetti::iWriteDataAtech(uint16_t addrToWrite, uint16_t data, bool wordMode)
+{
+    if (!wordMode)
+        return fumisComWriteByte(addrToWrite, data & 0xFF);
+    else
+        return fumisComWriteWord(addrToWrite, data);
+}
+
 //------------------------------------------
 // Public part
 
-Palazzetti::CommandResult Palazzetti::initialize()
+Palazzetti::CommandResult Palazzetti::initialize(bool loopBack /* = false*/)
 {
     if (m_openSerial == nullptr ||
         m_closeSerial == nullptr ||
@@ -1893,6 +1909,9 @@ Palazzetti::CommandResult Palazzetti::initialize()
 
     if (_isInitialized)
         return CommandResult::OK;
+
+    // comPortNumber affects loopBack processing
+    comPortNumber = loopBack ? 0 : 1;
 
     CommandResult cmdRes = iChkMBType();
     if (cmdRes != CommandResult::OK)
@@ -1919,7 +1938,7 @@ Palazzetti::CommandResult Palazzetti::initialize()
     return CommandResult::OK;
 }
 
-Palazzetti::CommandResult Palazzetti::initialize(OPENSERIAL_SIGNATURE openSerial, CLOSESERIAL_SIGNATURE closeSerial, SELECTSERIAL_SIGNATURE selectSerial, READSERIAL_SIGNATURE readSerial, WRITESERIAL_SIGNATURE writeSerial, DRAINSERIAL_SIGNATURE drainSerial, FLUSHSERIAL_SIGNATURE flushSerial, USLEEP_SIGNATURE uSleep)
+Palazzetti::CommandResult Palazzetti::initialize(OPENSERIAL_SIGNATURE openSerial, CLOSESERIAL_SIGNATURE closeSerial, SELECTSERIAL_SIGNATURE selectSerial, READSERIAL_SIGNATURE readSerial, WRITESERIAL_SIGNATURE writeSerial, DRAINSERIAL_SIGNATURE drainSerial, FLUSHSERIAL_SIGNATURE flushSerial, USLEEP_SIGNATURE uSleep, bool loopBack /* = false*/)
 {
     m_openSerial = openSerial;
     m_closeSerial = closeSerial;
@@ -1930,7 +1949,7 @@ Palazzetti::CommandResult Palazzetti::initialize(OPENSERIAL_SIGNATURE openSerial
     m_flushSerial = flushSerial;
     m_uSleep = uSleep;
 
-    return initialize();
+    return initialize(loopBack);
 }
 
 Palazzetti::CommandResult Palazzetti::getAllHiddenParameters(uint16_t (*hiddenParams)[0x6F])
@@ -2556,6 +2575,18 @@ Palazzetti::CommandResult Palazzetti::getStatus(uint16_t *STATUS, uint16_t *LSTA
     return CommandResult::OK;
 }
 
+Palazzetti::CommandResult Palazzetti::readData(uint16_t addrToRead, bool wordMode, uint16_t *ADDR_DATA)
+{
+    CommandResult cmdRes = initialize();
+    if (cmdRes != CommandResult::OK)
+        return cmdRes;
+
+    if (_MBTYPE < 0 || _MBTYPE >= 2)
+        return CommandResult::UNSUPPORTED;
+
+    return iReadDataAtech(addrToRead, ADDR_DATA, wordMode);
+}
+
 Palazzetti::CommandResult Palazzetti::setChronoDay(byte dayNumber, byte memoryNumber, byte programNumber)
 {
     CommandResult cmdRes = initialize();
@@ -3082,6 +3113,20 @@ Palazzetti::CommandResult Palazzetti::switchOn(uint16_t *STATUS, uint16_t *LSTAT
     m_uSleep(750000); // maximum measured time is 305ms (from STATUS=0 to STATUS=9)
 
     return getStatus(STATUS, LSTATUS, FSTATUS);
+}
+
+Palazzetti::CommandResult Palazzetti::writeData(uint16_t addrToWrite, uint16_t data, bool wordMode)
+{
+    CommandResult cmdRes = initialize();
+    if (cmdRes != CommandResult::OK)
+        return cmdRes;
+
+    if (_MBTYPE < 0 || _MBTYPE >= 2)
+        return CommandResult::UNSUPPORTED;
+
+    return iWriteDataAtech(addrToWrite, data, wordMode);
+    // the original code return the data untouched (even if its value is over 255 and wordMode is false...)
+    // considered as useless because CommandResult is enough to know if the command was successful
 }
 
 //------------------------------------------

@@ -547,7 +547,8 @@ void plzInit(void)
         std::bind(&myWriteSerial, std::placeholders::_1, std::placeholders::_2),
         std::bind(&myDrainSerial),
         std::bind(&myFlushSerial),
-        std::bind(&myUSleep, std::placeholders::_1)
+        std::bind(&myUSleep, std::placeholders::_1),
+        true
     );
 
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {

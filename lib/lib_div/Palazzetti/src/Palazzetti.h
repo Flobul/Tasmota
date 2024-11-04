@@ -285,6 +285,7 @@ private:
     CommandResult iGetStatusAtech();
     CommandResult iGetStoveConfigurationAtech();
     CommandResult iInit();
+    CommandResult iReadDataAtech(uint16_t addrToRead, uint16_t *data, bool wordMode);
     CommandResult iReadFansAtech();
     CommandResult iReadIOAtech();
     CommandResult iReadTemperatureAtech();
@@ -309,12 +310,13 @@ private:
     CommandResult iSwitchOnAtech();
     CommandResult iUpdateStaticData();
     CommandResult iUpdateStaticDataAtech();
+    CommandResult iWriteDataAtech(uint16_t addrToWrite, uint16_t data, bool wordMode);
 
     bool _isInitialized;
 
 public:
-    CommandResult initialize();
-    CommandResult initialize(OPENSERIAL_SIGNATURE openSerial, CLOSESERIAL_SIGNATURE closeSerial, SELECTSERIAL_SIGNATURE selectSerial, READSERIAL_SIGNATURE readSerial, WRITESERIAL_SIGNATURE writeSerial, DRAINSERIAL_SIGNATURE drainSerial, FLUSHSERIAL_SIGNATURE flushSerial, USLEEP_SIGNATURE uSleep);
+    CommandResult initialize(bool loopBack = false);
+    CommandResult initialize(OPENSERIAL_SIGNATURE openSerial, CLOSESERIAL_SIGNATURE closeSerial, SELECTSERIAL_SIGNATURE selectSerial, READSERIAL_SIGNATURE readSerial, WRITESERIAL_SIGNATURE writeSerial, DRAINSERIAL_SIGNATURE drainSerial, FLUSHSERIAL_SIGNATURE flushSerial, USLEEP_SIGNATURE uSleep, bool loopBack = false);
     bool isInitialized() { return _isInitialized; };
 
     CommandResult getAllHiddenParameters(uint16_t (*hiddenParams)[0x6F]);
@@ -336,6 +338,7 @@ public:
     CommandResult getSN(char (*SN)[28]);
     CommandResult getStaticData(char (*SN)[28], byte *SNCHK, int *MBTYPE, uint16_t *MOD, uint16_t *VER, uint16_t *CORE, char (*FWDATE)[11], uint16_t *FLUID, uint16_t *SPLMIN, uint16_t *SPLMAX, byte *UICONFIG, byte *HWTYPE, byte *DSPTYPE, byte *DSPFWVER, byte *CONFIG, byte *PELLETTYPE, uint16_t *PSENSTYPE, byte *PSENSLMAX, byte *PSENSLTSH, byte *PSENSLMIN, byte *MAINTPROBE, byte *STOVETYPE, byte *FAN2TYPE, byte *FAN2MODE, byte *BLEMBMODE, byte *BLEDSPMODE, byte *CHRONOTYPE, byte *AUTONOMYTYPE, byte *NOMINALPWR);
     CommandResult getStatus(uint16_t *STATUS, uint16_t *LSTATUS, uint16_t *FSTATUS);
+    CommandResult readData(uint16_t addrToRead, bool wordMode, uint16_t *ADDR_DATA);
 
     CommandResult setChronoDay(byte dayNumber, byte memoryNumber, byte programNumber);
     CommandResult setChronoPrg(byte programNumber, byte setPoint, byte startHour, byte startMinute, byte stophour, byte stopMinute);
@@ -363,6 +366,7 @@ public:
     CommandResult setSilentMode(byte silentMode, byte *SLNTReturn = nullptr, byte *PWRReturn = nullptr, uint16_t *F2LReturn = nullptr, uint16_t *F2LFReturn = nullptr, bool *isF3LF4LReturnValid = nullptr, uint16_t *F3LReturn = nullptr, uint16_t *F4LReturn = nullptr);
     CommandResult switchOff(uint16_t *STATUS, uint16_t *LSTATUS, uint16_t *FSTATUS);
     CommandResult switchOn(uint16_t *STATUS, uint16_t *LSTATUS, uint16_t *FSTATUS);
+    CommandResult writeData(uint16_t addrToWrite, uint16_t data, bool wordMode) __attribute__((warning("/!\\ writeData is a dangerous function and may arm your stove if not used carefully /!\\")));
     Palazzetti();
 };
 
