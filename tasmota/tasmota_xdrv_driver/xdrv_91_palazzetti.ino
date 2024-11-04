@@ -32,6 +32,7 @@
 #include <TasmotaSerial.h>
 #include <time.h>
 #include <WiFiUdp.h>
+#include <errno.h>
 
 Palazzetti pala;
 TasmotaSerial *plzSerial = nullptr;
@@ -874,7 +875,7 @@ void plzShow(bool json)
         } else {
             //WSContentSend_P(PSTR("<div>Brûleur éteint</div>"));
         }
-*/
+
         WSContentSend_P(PSTR("</table>"));
 
     }
@@ -1523,20 +1524,17 @@ void setChronoPrg(const String &cmd) {
     }
 }
 
-void getParameter(byte param, const char *prefix) {
-    byte paramValue;
-    plzIJson.cmdRes = pala.getParameter(param, &paramValue);
-    if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
-        char key[8];
-        snprintf(key, sizeof(key), PSTR("%s%d"), prefix, paramValue);
-        JSONAddIntElem(key, paramValue);
+void getParameter(const char *param, const char *prefix) {
+    char *endptr16;
+    int32_t paramIndex = strtol(param + 5, &endptr16, 10);
+    if (paramIndex == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
     }
-}
 
-void setParameter(const String &cmd, const char *prefix) {
-    int paramIndex = cmd.substring(9, 11).toInt();
-    int paramValue = cmd.substring(12).toInt();
-    plzIJson.cmdRes = pala.setParameter(paramIndex, paramValue);
+    byte paramValue;
+    plzIJson.cmdRes = pala.getParameter(paramIndex, &paramValue);
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande getParameter param=%d value=%d"), paramIndex, paramValue);
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
         char key[8];
         snprintf(key, sizeof(key), PSTR("%s%d"), prefix, paramIndex);
@@ -1544,31 +1542,78 @@ void setParameter(const String &cmd, const char *prefix) {
     }
 }
 
-void getHiddenParameter(byte param, const char *prefix) {
-    uint16_t hiddenParamValue;
-    plzIJson.cmdRes = pala.getHiddenParameter(param, &hiddenParamValue);
+void setParameter(const char *cmdStr, const char *prefix) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setParameter cmdStr=%s"), cmdStr);
+    char *endptr1;
+    int32_t paramIndex = strtol(cmdStr + 5, &endptr1, 10);
+    if (paramIndex == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
+    }
+
+    char *endptr2;
+    int32_t setParamValue = strtol(endptr1, &endptr2, 10);
+    if (setParamValue == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setParameter index=%d value=%d"), paramIndex, setParamValue);
+    plzIJson.cmdRes = pala.setParameter(paramIndex, setParamValue);
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
         char key[8];
-        snprintf(key, sizeof(key), PSTR("%s%d"), prefix, param);
+        snprintf(key, sizeof(key), "%s%d", prefix, paramIndex);
+        JSONAddIntElem(key, setParamValue);
+    }
+}
+
+void getHiddenParameter(const char *hiddenParam, const char *prefix) {
+    char *endptr3;
+    int32_t hParamIndex = strtol(hiddenParam + 5, &endptr3, 10);
+    if (hParamIndex == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
+    }
+    uint16_t hiddenParamValue;
+
+    plzIJson.cmdRes = pala.getHiddenParameter(hParamIndex, &hiddenParamValue);
+    if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
+        char key[8];
+        snprintf(key, sizeof(key), PSTR("%s%d"), prefix, hParamIndex);
         JSONAddIntElem(key, hiddenParamValue);
     }
 }
 
-void setHiddenParameter(const String &cmd, const char *prefix) {
-    int paramIndex = cmd.substring(9, 11).toInt();
-    int paramValue = cmd.substring(12).toInt();
-    plzIJson.cmdRes = pala.setHiddenParameter(paramIndex, paramValue);
+void setHiddenParameter(const char *cmdStr, const char *prefix) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setHiddenParameter cmdStr=%s"), cmdStr);
+    char *endptr4;
+    int32_t hParamIndex = strtol(cmdStr + 5, &endptr4, 10);
+    if (hParamIndex == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
+    }
+
+    char *endptr5;
+    int32_t setHParamValue = strtol(endptr4, &endptr5, 10);
+    if (setHParamValue == 0 == errno == 0) {
+        plzIJson.cmdRes = Palazzetti::CommandResult::PARSER_ERROR;
+        return;
+    }
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande setHiddenParameter index=%d value=%d"), hParamIndex, setHParamValue);
+
+    plzIJson.cmdRes = pala.setHiddenParameter(hParamIndex, setHParamValue);
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
         char key[8];
-        snprintf(key, sizeof(key), PSTR("%s%d"), prefix, paramIndex);
-        JSONAddIntElem(key, paramValue);
+        snprintf(key, sizeof(key), "%s%d", prefix, hParamIndex);
+        JSONAddIntElem(key, setHParamValue);
     }
 }
 
 #ifdef USE_WEBSERVER
-void getAllParameters(char* fileType) {
+void getAllParameters(const char *cmnd) {
+    char fileType[5];
+    strncpy(fileType, cmnd + 5, 4);
+    fileType[4] = '\0'; 
     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande getAllParameters=%s"), fileType);
-
     if (!isValidFileType(fileType)) {
         snprintf(plzIJson.msg, sizeof(plzIJson.msg), PSTR("Unknown filetype: %s"), fileType);
         plzIJson.cmdRes = Palazzetti::CommandResult::UNSUPPORTED;
@@ -1577,7 +1622,10 @@ void getAllParameters(char* fileType) {
     }
     plzIJson.cmdRes = pala.getAllParameters(&Plz.params);
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
-        sendParametersResponse(fileType, Plz.params, 0x6A, "PARM");
+        char cmdParm[5];
+        strncpy(cmdParm, cmnd, 4);
+        cmdParm[4] = '\0';
+        sendParametersResponse(fileType, Plz.params, 0x6A, cmdParm);
     }
 }
 
@@ -1585,10 +1633,11 @@ bool isValidFileType(const char* fileType) {
     return (strcmp(fileType, "CSV") == 0 || strcmp(fileType, "JSON") == 0);
 }
 
-void getAllHiddenParameters(char* fileType) {
-    AddLog(LOG_LEVEL_INFO, PSTR("Free heap: %d"), ESP.getFreeHeap());
+void getAllHiddenParameters(const char *cmnd) {
+    char fileType[5];
+    strncpy(fileType, cmnd + 5, 4);
+    fileType[4] = '\0'; 
     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande getAllHiddenParameters=%s"), fileType);
-
     if (!isValidFileType(fileType)) {
         snprintf(plzIJson.msg, sizeof(plzIJson.msg), PSTR("Unknown filetype: %s"), fileType);
         plzIJson.cmdRes = Palazzetti::CommandResult::UNSUPPORTED;
@@ -1597,8 +1646,11 @@ void getAllHiddenParameters(char* fileType) {
     }
     plzIJson.cmdRes = pala.getAllHiddenParameters(&Plz.hiddenParams);
     if (plzIJson.cmdRes == Palazzetti::CommandResult::OK) {
+        char cmdParm[5];
+        strncpy(cmdParm, cmnd, 4);
+        cmdParm[4] = '\0';
         AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande CommandResult=%s"), fileType);
-        sendParametersResponse(fileType, Plz.hiddenParams, 0x6F, "HPAR");
+        sendParametersResponse(fileType, Plz.hiddenParams, 0x6F, cmdParm);
     }
 }
 
@@ -1615,17 +1667,6 @@ void sendParametersResponse(char* fileType, const void* params, size_t paramCoun
         for (size_t i = 0; i < paramCount; i++) {
             JSONAddCSVElem(String(i).c_str(), ((const byte*)params)[i]);
         }
-
-/*
-        char temp[1024];
-
-        toReturn += String(paramType) + F(";VALUE\r\n");
-        for (size_t i = 0; i < paramCount; i++) {
-            toReturn += String(i) + ';' + String(((const byte*)params)[i]) + '\r' + '\n';
-        }
-        snprintf_P(temp, sizeof(temp), PSTR("%s"), toReturn.c_str());
-        strcat_P(plzIJson.data, temp);
-        JSONCloseObj();*/
     } else if (strcmp(fileType, "JSON") == 0) {
         JSONAddArray(paramType);
         for (size_t i = 0; i < paramCount; i++) {
