@@ -1774,7 +1774,7 @@ bool plzParser(const char* cmnd) {
         }
         JSONCloseObj();
     }
-    snprintf(response, sizeof(response), "{%s}", plzIJson.data);
+    //snprintf(response, sizeof(response), "{%s}", plzIJson.data);
     if (isGetRequest || isUdpRequest) {
         JSONAddComma();
         JSONAddBoolElem("SUCCESS", success);
