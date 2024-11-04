@@ -26,7 +26,8 @@
 #define PLZ_SETTINGS_MQTT_TOPIC   0     //0=RAW value in one topic (ex: TELE/T1 = 19.20);
                                         //1=JSON in category topic (ex: TELE/TMPS = "{\"INFO\":"DATA":{"T1":23.20}...}");
                                         //2=RAW value in category topic (ex: TELE/TMPS/T1 = 19.20)
-#define PLZ_ENDPOINT              "/cgi-bin/sendmsg.lua"
+#define PLZ_SENDMSG_ENDPOINT       "/cgi-bin/sendmsg.lua"
+#define PLZ_SYSCMD_ENDPOINT        "/cgi-bin/syscmd.lua"
 #include <Palazzetti.h>
 #include <TasmotaSerial.h>
 #include <time.h>
@@ -77,7 +78,7 @@ struct {
     char info[256];   // Buffer temporaire pour chaque bloc de JSON ("INFO":{"CMD":...)
     char full[1280];  // Taille ajustée pour contenir les deux ({"INFO":{"CMD":"GET+SETP","DATA":...}})
     char msg[128];  // message lors d'erreur
-    char cmd[16];  // cmd envoyée
+    char cmd[29];  // cmd envoyée
     time_t ts;
 } plzIJson;
 
@@ -698,11 +699,11 @@ void PlzHandleUdpRequest() {
         isUdpRequest = true;
 
         if (strData.endsWith("bridge?")) { //plz, jot
-            plzExecuteCmd("GET STDT");
+            plzSendmsgCmd("GET STDT");
         } else if (strData.endsWith("bridge?GET ALLS")) {
-            plzExecuteCmd("GET ALLS");
+            plzSendmsgCmd("GET ALLS");
         } else {
-            plzExecuteCmd("");
+            plzSendmsgCmd("");
         }
 
         if (plzIJson.full[0] != '\0') {
@@ -869,18 +870,37 @@ void plzShow(bool json)
 
 #ifdef USE_WEBSERVER
 
-void plzRequestHandler(void) {
+void plzSendmsgRequestHandler(void) {
     if (!HttpCheckPriviledgedAccess()) {
         return;
     }
     isGetRequest = true;
-    char cmd[14];
+    char cmd[29];
     WebGetArg(PSTR("cmd"), cmd, sizeof(cmd));
 
     if (strlen(cmd) > 0) {
         AddLog(LOG_LEVEL_INFO, PSTR("PLZ: SENDMSG received with command: %s"), cmd);
-        if (plzExecuteCmd(cmd)) {
-            AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd successful"));
+        if (plzSendmsgCmd(cmd)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd successful"));
+        } else {
+            AddLog(LOG_LEVEL_ERROR, PSTR("PLZ: Commande échouée:"));
+        }
+    }
+}
+
+
+void plzSyscmdRequestHandler(void) {
+    if (!HttpCheckPriviledgedAccess()) {
+        return;
+    }
+    isGetRequest = true;
+    char cmd[29];
+    WebGetArg(PSTR("cmd"), cmd, sizeof(cmd));
+
+    if (strlen(cmd) > 0) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: SENDMSG received with command: %s"), cmd);
+        if (plzSyscmdCmd(cmd)) {
+            AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd successful"));
         } else {
             AddLog(LOG_LEVEL_ERROR, PSTR("PLZ: Commande échouée:"));
         }
@@ -900,7 +920,7 @@ void plzUpdate(void)
     };
 
     for (char* cmd : cmdList) {
-        if (!plzExecuteCmd(cmd)) {
+        if (!plzSendmsgCmd(cmd)) {
             AddLog(LOG_LEVEL_ERROR, PSTR("Command failed: %s"), cmd);
             break;
         }
@@ -1596,15 +1616,20 @@ void sendParametersResponse(char* fileType, const void* params, size_t paramCoun
 
 #endif //USE_WEBSERVER
 
-bool plzExecuteCmd(const char* cmd) {
-    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd cmnd=%s"), cmd);
-
+bool plzSyscmdCmd(const char* cmd) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSyscmdCmd cmd=%s"), cmd);
+    //wifiscan
+    //listbledev
+    //nwdata
+    //netdata
+    //settz &tz=
+    //setsystemclock datetime
     char cmndType[4] = {0};
-    char cmnd[12] = {0};
+    char cmnd[25] = {0};
 
     const char* separator = strchr(cmd, ' ');
     if (!separator) {
-        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd no separator found"));
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd no separator found"));
         return false;
     }
 
@@ -1615,13 +1640,37 @@ bool plzExecuteCmd(const char* cmd) {
     // Convertir en majuscules
     for (char &c : cmndType) c = toupper(c);
     for (char &c : cmnd) c = toupper(c);
+    bool success = false;
 
-    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd cmndType=%s"), cmndType);
-    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzExecuteCmd cmnd=%s"), cmnd);
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSyscmdCmd cmndType=%s"), cmndType);
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSyscmdCmd cmnd=%s"), cmnd);
+
+    if (strcasecmp(cmndType, "SETTZ") == 0) {
+        //success = plzParserGET(cmnd);
+    } else if (strcasecmp(cmndType, "SETTZ") == 0) {
+    }
+    return false;
+}
+
+bool plzSendmsgCmd(const char* cmd) {
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd cmd=%s"), cmd);
+
+    const char* separator = strchr(cmd, ' ');
+    if (!separator) {
+        AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd no separator found"));
+        return false;
+    }
+
+    char cmdCopy[30];
+    snprintf(cmdCopy, sizeof(cmdCopy), "%s", cmd);
+
+    for (char &c : cmdCopy) c = toupper(c);
+
+    AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Commande plzSendmsgCmd cmnd=%s"), cmdCopy);
 
     initJSON();
-    snprintf(plzIJson.cmd, sizeof(plzIJson.cmd), PSTR("%s"), cmd);
-    return plzParser(cmndType, cmnd);
+    snprintf(plzIJson.cmd, sizeof(plzIJson.cmd), PSTR("%s"), cmdCopy);
+    return plzParser(cmdCopy);
 }
 
 bool plzParser(const char* type, const char* cmnd) {
@@ -1949,7 +1998,7 @@ bool plzCmd(void) {
                 case CMND_PALAZZETTI_SENDMSG:
                     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Sendmsg cmd %s"), arg_part);
                     if (plz_connected && *arg_part != '\0') {
-                        serviced = plzExecuteCmd(arg_part);
+                        serviced = plzSendmsgCmd(arg_part);
                     }
                     serviced = true;
                     break;
@@ -2143,10 +2192,11 @@ bool Xdrv91(uint32_t function) {
             break;
     #ifdef USE_WEBSERVER
         case FUNC_WEB_ADD_HANDLER:
-            WebServer_on(PLZ_ENDPOINT, plzRequestHandler);
+            WebServer_on(PLZ_SENDMSG_ENDPOINT, plzSendmsgRequestHandler);
+            WebServer_on(PLZ_SYSCMD_ENDPOINT, plzSyscmdRequestHandler);
             break;
         case FUNC_WEB_GET_ARG:
-            plzRequestHandler();
+            plzSendmsgRequestHandler();
             break;
         case FUNC_WEB_SENSOR:
             if (plz_connected) { plzShow(0); }
