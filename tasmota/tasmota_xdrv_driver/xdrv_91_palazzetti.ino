@@ -928,8 +928,9 @@ void plzUpdate(void)
     AddLog(LOG_LEVEL_INFO, PSTR("PLZ: update"));
 
     char* cmdList[] = {
-        (char*)"GET TIME", (char*)"GET SETP", (char*)"GET POWR", (char*)"GET DPRS",
-        (char*)"GET STAT", (char*)"GET TMPS", (char*)"GET FAND", (char*)"GET CNTR"
+        (char*)"GET STDT", (char*)"GET TIME", (char*)"GET SETP", (char*)"GET POWR",
+        (char*)"GET DPRS", (char*)"GET STAT", (char*)"GET TMPS", (char*)"GET FAND",
+        (char*)"GET CNTR"
     };
 
     for (char* cmd : cmdList) {
