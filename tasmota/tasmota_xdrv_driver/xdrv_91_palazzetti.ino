@@ -1822,7 +1822,7 @@ bool plzParser(const char* cmnd) {
         JSONMerge();
 
         snprintf(mqttTopic, sizeof(mqttTopic), "%s", localCommand);
-        Response_P(PSTR("%s"), plzIJson.data);
+        Response_P(PSTR("%s"), plzIJson.full);
         MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, mqttTopic);
 
     } else if (PalazzettiSettings.mqtttopic == 0 || PalazzettiSettings.mqtttopic == 2) {
