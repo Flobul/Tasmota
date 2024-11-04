@@ -1835,9 +1835,18 @@ bool plzParser(const char* cmnd) {
             if (!keyEnd) break;
             *keyEnd = '\0';
 
-            char *valueStart = strchr(keyEnd + 1, ':') + 1;
-            while (*valueStart == ' ') valueStart++;
-            char* valueEnd = *valueStart == '"' ? strchr(valueStart + 1, '"') : valueStart;
+            char *valueStart = strchr(keyEnd + 1, ':') + 1;  // Trouver le début de la valeur
+            if (!valueStart) break;
+            while (*valueStart == ' ') valueStart++;  // Ignorer les espaces après :
+
+            char *valueEnd;
+            if (*valueStart == '"') {
+                valueStart++;  // Ignorer le guillemet ouvrant
+                valueEnd = strchr(valueStart, '"');  // Fin de la valeur entre guillemets
+            } else {
+                valueEnd = valueStart;
+                while (*valueEnd && *valueEnd != ',' && *valueEnd != '}') valueEnd++;  // Valeur non entre guillemets
+            }
             if (!valueEnd) break;
             *valueEnd = '\0';
 
