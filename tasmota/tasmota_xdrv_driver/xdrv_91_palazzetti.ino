@@ -1850,19 +1850,37 @@ bool plzParser(const char* cmnd) {
             if (!valueEnd) break;
             *valueEnd = '\0';
 
-            snprintf(mqttTopic, sizeof(mqttTopic), PalazzettiSettings.mqtttopic == 2 ? "%s/%s" : "%s", localCommand, keyStart + 1);
-            // Prépare le topic et publie
-/*            if (PalazzettiSettings.mqtttopic == 0) {
+            if (PalazzettiSettings.mqtttopic == 0) {
                 snprintf(mqttTopic, sizeof(mqttTopic), "%s", keyStart + 1);
             } else if (PalazzettiSettings.mqtttopic == 2) {
                 snprintf(mqttTopic, sizeof(mqttTopic), "%s/%s", localCommand, keyStart + 1);
             }
-               */ 
-            AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Publishing MQTT: topic = %s, value = %s"), mqttTopic, valueStart);
+               
+            AddLog(LOG_LEVEL_INFO, PSTR("PLZ: Publishing MQTT: topic=%s, valueS=%s, localCmd=%s, keyStart+1=%s"), mqttTopic, valueStart, localCommand, keyStart + 1);
             Response_P(PSTR("%s"), valueStart);
             MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, mqttTopic);
 
             keyStart = valueEnd + 1;
+        }
+        Response_P(PSTR("%s"), plzIJson.cmd);
+        if (PalazzettiSettings.mqtttopic == 0) {
+            MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "CMD");
+        } else if (PalazzettiSettings.mqtttopic == 2) {
+            MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "INFO/CMD");
+        }
+        if (plzIJson.ts > 0) {
+            Response_P(PSTR("%u"), plzIJson.ts);
+            if (PalazzettiSettings.mqtttopic == 0) {
+                MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "TS");
+            } else if (PalazzettiSettings.mqtttopic == 2) {
+                MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "INFO/TS");
+            }
+        }
+        Response_P(PSTR("%s"), commandResultToString());
+        if (PalazzettiSettings.mqtttopic == 0) {
+            MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "RSP");
+        } else if (PalazzettiSettings.mqtttopic == 2) {
+            MqttPublishPrefixTopicRulesProcess_P(mqttPrefix, "INFO/RSP");
         }
     } 
     return success;
