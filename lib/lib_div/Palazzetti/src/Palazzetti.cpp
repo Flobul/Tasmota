@@ -1667,12 +1667,6 @@ Palazzetti::CommandResult Palazzetti::iSetSetPointAtech(float setPoint)
 
 Palazzetti::CommandResult Palazzetti::iSetSilentModeAtech(uint16_t silentMode)
 {
-
-    // Custom code not in original one
-    // Silent mode should be available only for stove with more than 2 Fans/Pumps
-    if (_FAN2TYPE < 3)
-        return CommandResult::UNSUPPORTED;
-
     if (silentMode > 0)
     {
         CommandResult cmdRes = iSetRoomFanAtech(7);
@@ -1866,11 +1860,11 @@ Palazzetti::CommandResult Palazzetti::iUpdateStaticDataAtech()
             _SPLMIN = (uint8_t)((double)_SPLMIN / 5.0);
             _SPLMAX = (uint8_t)((double)_SPLMAX / 5.0);
         }
-        else if (_FLUID == 2)
-        {
-            _SPLMIN = _LIMMIN[0x54];
-            _SPLMAX = _LIMMAX[0x54];
-        }
+    }
+    else if (_FLUID == 2)
+    {
+        _SPLMIN = _LIMMIN[0x54];
+        _SPLMAX = _LIMMAX[0x54];
     }
 
     ///*iGetLimitsAtech OK*/
@@ -2143,7 +2137,7 @@ Palazzetti::CommandResult Palazzetti::getChronoData(byte *CHRSTATUS, float (*PCH
         return cmdRes;
 
     if (CHRSTATUS)
-        *CHRSTATUS = chronoDataStatus;
+        *CHRSTATUS = _CHRSTATUS; // original code should have been "chronoDataStatus > 0 ? 1 : 0" but _CHRSTATUS is readily available...
     for (byte i = 0; i < 6; i++)
     {
         if (PCHRSETP)

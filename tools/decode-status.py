@@ -306,7 +306,7 @@ a_features = [[
     ],[
     "USE_MAGIC_SWITCH","USE_PIPSOLAR","USE_GPIO_VIEWER","USE_AMSX915",
     "USE_SPI_LORA","USE_SPL06_007","USE_QMP6988","USE_WOOLIIS",
-    "USE_HX711_M5SCALES","USE_RX8010","","",
+    "USE_HX711_M5SCALES","USE_RX8010","USE_PALAZZETTI","",
     "","","","",
     "","","","",
     "","","","",

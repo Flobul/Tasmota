@@ -313,6 +313,7 @@ const be_const_member_t lv_gpio_constants[] = {
     { "TELEINFO_RX", (int32_t) GPIO_TELEINFO_RX },
     { "PALAZZETTI_RX", (int32_t) GPIO_PALAZZETTI_RX },
     { "PALAZZETTI_TX", (int32_t) GPIO_PALAZZETTI_TX },
+    { "PALAZZETTI_DETECT", (int32_t) GPIO_PALAZZETTI_DETECT },
     { "TFMINIPLUS_RX", (int32_t) GPIO_TFMINIPLUS_RX },
     { "TFMINIPLUS_TX", (int32_t) GPIO_TFMINIPLUS_TX },
     { "TM1621_CS", (int32_t) GPIO_TM1621_CS },

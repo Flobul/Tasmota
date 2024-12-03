@@ -793,6 +793,10 @@
 #define USE_DISPLAY_TM1621_SONOFF                // Add support for TM1621 display driver used by Sonoff POWR3xxD and THR3xxD
 #define USE_LOX_O2                               // Add support for LuminOx LOX O2 Sensor (+0k8 code)
 
+#ifndef USE_PALAZZETTI
+#define USE_PALAZZETTI                                  // Enable PALAZZETTI
+#endif
+
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif

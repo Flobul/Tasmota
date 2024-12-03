@@ -85,7 +85,7 @@ In addition to @arendst the following code is mainly owned by:
 | xdrv_71_magic_switch         | @barbudor
 | xdrv_72_pipsolar             | @chefpro
 | xdrv_73_lora                 | @arendst
-| xdrv_74                      |
+| xdrv_74_palazzetti           | @Flobul
 | xdrv_75                      |
 | xdrv_76                      |
 | xdrv_77                      |
