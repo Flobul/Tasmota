@@ -44,6 +44,9 @@ Support of ESP8266 Core versions before 2.7.7 and ESP32 Core versions before 3.0
 
 Due to the change from ESP32 Arduino Core2/IDF4 to Arduino Core3/IDF5 not all functionality has been restored. The following features are known not to work on ESP32:
 - Wifi Range Extender [#21200](https://github.com/arendst/Tasmota/issues/21200)
+This release will be supported from ESP32/Arduino library Core version **v3.1.0.241206**.
+
+Support of ESP8266 Core versions before 2.7.8 and ESP32 Core versions before v3.1.0.241206 have been removed.
 
 ## Support of TLS
 
@@ -80,12 +83,13 @@ Latest released binaries can be downloaded from
 - http://ota.tasmota.com/tasmota/release
 
 Historical binaries can be downloaded from
-- http://ota.tasmota.com/tasmota/release-14.2.0
+- http://ota.tasmota.com/tasmota/release-14.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl http://ota.tasmota.com/tasmota/release/tasmota.bin.gz``
 
 ### ESP32, ESP32-C2, ESP32-C3, ESP32-C6, ESP32-S2 and ESP32-S3 based
 The following binary downloads have been compiled with ESP32/Arduino library core version **3.0.4**.
+The following binary downloads have been compiled with ESP32/Arduino library core version **v3.1.0.241206**.
 
 - **tasmota32.bin** = The Tasmota version with most drivers including additional sensors and KNX for 4M+ flash.  **RECOMMENDED RELEASE BINARY**
 - **tasmota32solo1.bin** = The Tasmota version with most drivers including additional sensors and KNX for single core ESP32 and 4M+ flash.
@@ -109,7 +113,7 @@ Latest released binaries can be downloaded from
 - https://ota.tasmota.com/tasmota32/release
 
 Historical binaries can be downloaded from
-- https://ota.tasmota.com/tasmota32/release-14.2.0
+- https://ota.tasmota.com/tasmota32/release-14.4.0
 
 The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasmota.com/tasmota32/release/tasmota32.bin``
 
@@ -139,9 +143,12 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Berry improve `int64` constructor [#22172](https://github.com/arendst/Tasmota/issues/22172)
 - Matter support for Zigbee Temperature, Humidity and Pressure sensors [#22084](https://github.com/arendst/Tasmota/issues/22084)
 - Matter support for Zigbee Occupancy and Light 0/1/2 (OnOff / Dimmer / White Color Temperature) [#22110](https://github.com/arendst/Tasmota/issues/22110)
+## Changelog v14.4.0.1
+### Added
+- MCP23XXX_DRV control register IOCON in template [#22622](https://github.com/arendst/Tasmota/issues/22622)
+- ESP32 support for TLS ECDSA [#22649](https://github.com/arendst/Tasmota/issues/22649)
 
 ### Breaking Changed
-- Berry make `energy` modules changes from #21887 backwards compatible [#22046](https://github.com/arendst/Tasmota/issues/22046)
 
 ### Changed
 - ESP32 platform update from 2024.08.10 to 2024.09.10 and Framework (Arduino Core) from v3.0.4 to v3.0.5 [#22163](https://github.com/arendst/Tasmota/issues/22163)
@@ -177,7 +184,14 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 - Matter fix when Rules are disabled [#22016](https://github.com/arendst/Tasmota/issues/22016)
 - Matter fail to report Shutter status if no shutter is configured in Tasmota [#22049](https://github.com/arendst/Tasmota/issues/22049)
 - Matter fix Waterleak broken after Berry solidification optimisation #21885 [#22052](https://github.com/arendst/Tasmota/issues/22052)
+- Display removed PWM control of backlight GPIO for universal display regression from v14.1.0
+- SSL clean up remnants of old fingerprint algorithm [#22645](https://github.com/arendst/Tasmota/issues/22645)
+- Berry make Leds animate calls reentrant [#22643](https://github.com/arendst/Tasmota/issues/22643)
+
+### Fixed
+- Display DisplayMode adds a display device while not configured
+- GUI display power button regression from v14.3.0.5 [#15788](https://github.com/arendst/Tasmota/issues/15788)
+- MCP23xxx, PCF8574 and Shift595 power control when a display is configured regression from v14.3.0.7
+- ESP32 rules operation priority regression from v13.3.0.4 [#22636](https://github.com/arendst/Tasmota/issues/22636)
 
 ### Removed
-- ESP8266 Analog input support using energy driver as only one channel is available
-- Berry remove reuse of methods for interface-like code reuse #21500 [#22055](https://github.com/arendst/Tasmota/issues/22055)

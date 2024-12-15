@@ -404,7 +404,7 @@ class type_mapper_class:
     "lv_roller_mode_t": "i",
     "lv_table_cell_ctrl_t": "i",
 
-    "lv_calendar_chinese_t": "c",
+    # "lv_calendar_chinese_t": "c",
 
     # arrays
     "constchar * []": "str_arr",
@@ -453,6 +453,7 @@ class type_mapper_class:
     # "char **": "lv_str_arr",           # treat as a simple pointer, decoding needs to be done at Berry level
     "constchar **": "c",      # treat as a simple pointer, decoding needs to be done at Berry level
     "void * []": "c",         # treat as a simple pointer, decoding needs to be done at Berry level
+    "constchar * *": "c",
 
     # callbacks
     "lv_group_focus_cb_t": "lv_group_focus_cb",
