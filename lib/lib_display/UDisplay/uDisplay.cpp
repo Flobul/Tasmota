@@ -242,7 +242,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
               if (wire_n == 1) {
                 wire = &Wire;
               } else {
-#ifdef ESP32               
+#if SOC_HP_I2C_NUM > 1
                 wire = &Wire1;
 #else
                 wire = &Wire;
@@ -599,6 +599,12 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
           case 'B':
             lvgl_param.flushlines = next_val(&lp1);
             lvgl_param.data = next_val(&lp1);
+            // temporary fix to disable DMA due to a problem in esp-idf 5.3
+#ifdef ESP32
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
+            lvgl_param.use_dma = false;
+#endif
+#endif
             break;
           case 'M':
             rotmap_xmin = next_val(&lp1);
@@ -630,7 +636,7 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
                 if (ut_mode == 1) {
                   ut_wire = &Wire;
                 } else {
-#ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
                   ut_wire = &Wire1;
 #else
                   ut_wire = &Wire;
@@ -674,14 +680,15 @@ uDisplay::uDisplay(char *lp) : Renderer(800, 600) {
     if (*lp == '\n' || *lp == ' ') {   // Add space char
       lp++;
     } else {
-      lp = strchr(lp, '\n');
-      if (!lp) {
-        lp = strchr(lp, ' ');
-        if (!lp) {
+      char *lp1;
+      lp1 = strchr(lp, '\n');
+      if (!lp1) {
+        lp1 = strchr(lp, ' ');
+        if (!lp1) {
           break;
         }
       }
-      lp++;
+      lp = lp1 + 1;
     }
   }
 
@@ -1070,7 +1077,7 @@ Renderer *uDisplay::Init(void) {
     if (wire_n == 0) {
       wire = &Wire;
     }
-#ifdef ESP32
+#if SOC_HP_I2C_NUM > 1
     if (wire_n == 1) {
       wire = &Wire1;
     }
